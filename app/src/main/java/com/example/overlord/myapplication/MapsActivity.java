@@ -14,6 +14,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
@@ -30,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -74,6 +76,7 @@ public class MapsActivity extends FragmentActivity {
     private Activity mActivity = MapsActivity.this;
     private GeoFire mGeoFire;
     private GeoQuery mGeoQuery;
+    private UiSettings mUiSettings;
     private Location mMyLocation;
     private GoogleMap mGoogleMap;
     private DatabaseReference mFirebase;
@@ -84,7 +87,7 @@ public class MapsActivity extends FragmentActivity {
     protected void initializeMembers() {
         mFirebase = FirebaseDatabase.getInstance().getReference();
         mGeoFire = new GeoFire(mFirebase.child(GEOFIRE_NODE_TAG));
-        mGeoQuery = mGeoFire.queryAtLocation(GEO_LOCATION_NESCAFE, 0.01);
+        mGeoQuery = mGeoFire.queryAtLocation(GEO_LOCATION_NESCAFE, 0.1);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -94,7 +97,7 @@ public class MapsActivity extends FragmentActivity {
                         mLocationRequest = LocationRequest
                                 .create()
                                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                                .setInterval(2000);
+                                .setInterval(1000);
 
                         if(appHasRequiredPermissions())
                             try {
@@ -144,33 +147,26 @@ public class MapsActivity extends FragmentActivity {
                     public void run() {
                         if(appHasRequiredPermissions()){
 
-                            LatLngBounds bounds = new LatLngBounds.Builder()
-                                    .include(getLatLng(mMyLocation))
-                                    .include(getLatLng(GEO_LOCATION_NESCAFE))
-                                    .build();
-
                             for(Map.Entry<String, GeoLocation> team : mTeamLocations.entrySet())
                                 mGoogleMap.addMarker(
                                         new MarkerOptions()
-                                        .position(getLatLng(team.getValue()))
-                                        .title(team.getKey())
-                                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher))
+                                                .position(getLatLng(team.getValue()))
+                                                .title(team.getKey())
+                                                .flat(true)
+                                                .rotation(mMyLocation.getBearing())
+                                                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher))
                                 );
 
                             CameraPosition cameraPosition = CameraPosition
                                     .builder(mGoogleMap.getCameraPosition())
+                                    .target(getLatLng(mMyLocation))
+                                    .zoom(19)
+                                    .tilt(25)
                                     .bearing(location.getBearing())
                                     .build();
 
-
-                            int margin = getResources().getDimensionPixelSize(R.dimen.activity_horizontal_margin);
-
                             mGoogleMap.animateCamera(CameraUpdateFactory
                                     .newCameraPosition(cameraPosition));
-
-                            mGoogleMap.animateCamera(CameraUpdateFactory
-                                    .newLatLngBounds(bounds, margin));
-
                         }
                     }
                 }
@@ -243,12 +239,33 @@ public class MapsActivity extends FragmentActivity {
                     }
                 }
         );
+        mGoogleMap.setInfoWindowAdapter(
+                new GoogleMap.InfoWindowAdapter() {
+                    @Override
+                    public View getInfoWindow(Marker marker) {
+                        TextView textView = new TextView(mActivity);
+                        textView.setText(marker.getTitle());
+                        return textView;
+                    }
+
+                    @Override
+                    public View getInfoContents(Marker marker) {
+                        TextView textView = new TextView(mActivity);
+                        textView.setText(marker.getTitle());
+                        return textView;
+                    }
+                }
+        );
     }
 
     protected void setGoogleMapStyle(int resourceID){
         try{
+            mUiSettings = mGoogleMap.getUiSettings();
+            mUiSettings.setMapToolbarEnabled(false);
 
             mGoogleMap.setMaxZoomPreference(mGoogleMap.getMaxZoomLevel());
+            mGoogleMap.setBuildingsEnabled(true);
+
 
             if(!mGoogleMap.setMapStyle(
                     MapStyleOptions.loadRawResourceStyle(
@@ -257,7 +274,10 @@ public class MapsActivity extends FragmentActivity {
                     )
             ))
                 Log.e("STYLE", "FAILED");
-        } catch (Resources.NotFoundException e){}
+        } catch (Resources.NotFoundException e){
+
+            Log.e("STYLE", "NOT PRESENT");
+        }
     }
 
     @Override
