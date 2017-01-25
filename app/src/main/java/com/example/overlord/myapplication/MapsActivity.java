@@ -12,8 +12,10 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
+import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +44,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.twitter.sdk.android.core.models.Card;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -146,16 +149,27 @@ public class MapsActivity extends FragmentActivity {
                     @Override
                     public void run() {
                         if(appHasRequiredPermissions()){
+                            mGoogleMap.clear();
+                            MarkerOptions options = new MarkerOptions()
+                                    .rotation(location.getBearing())
+                                    .flat(true);
 
+                            //Enemies
                             for(Map.Entry<String, GeoLocation> team : mTeamLocations.entrySet())
                                 mGoogleMap.addMarker(
-                                        new MarkerOptions()
-                                                .position(getLatLng(team.getValue()))
+                                        options.position(getLatLng(team.getValue()))
                                                 .title(team.getKey())
-                                                .flat(true)
-                                                .rotation(mMyLocation.getBearing())
-                                                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_launcher))
+                                                .icon(BitmapDescriptorFactory
+                                                        .defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
                                 );
+
+                            //Self Location
+                            mGoogleMap.addMarker(
+                                    options.position(getLatLng(location))
+                                            .title(MY_LOCATION_TAG)
+                                            .icon(BitmapDescriptorFactory
+                                                    .defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                            );
 
                             CameraPosition cameraPosition = CameraPosition
                                     .builder(mGoogleMap.getCameraPosition())
@@ -206,7 +220,8 @@ public class MapsActivity extends FragmentActivity {
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
                 Log.i("onKeyEntered", key + ">" + location.toString());
-                mTeamLocations.put(key, location);
+                if(!key.equals(MY_LOCATION_TAG))
+                    mTeamLocations.put(key, location);
             }
 
             @Override
@@ -234,25 +249,19 @@ public class MapsActivity extends FragmentActivity {
                 new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
-                        Toast.makeText(mActivity, marker.getTitle(), Toast.LENGTH_SHORT).show();
+
                         return false;
                     }
                 }
         );
-        mGoogleMap.setInfoWindowAdapter(
-                new GoogleMap.InfoWindowAdapter() {
-                    @Override
-                    public View getInfoWindow(Marker marker) {
-                        TextView textView = new TextView(mActivity);
-                        textView.setText(marker.getTitle());
-                        return textView;
-                    }
 
+        mGoogleMap.setInfoWindowAdapter(new TeamInfoAdapter());
+
+        mGoogleMap.setOnInfoWindowClickListener(
+                new GoogleMap.OnInfoWindowClickListener() {
                     @Override
-                    public View getInfoContents(Marker marker) {
-                        TextView textView = new TextView(mActivity);
-                        textView.setText(marker.getTitle());
-                        return textView;
+                    public void onInfoWindowClick(Marker marker) {
+                        Toast.makeText(mActivity, "YO", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -267,13 +276,13 @@ public class MapsActivity extends FragmentActivity {
             mGoogleMap.setBuildingsEnabled(true);
 
 
-            if(!mGoogleMap.setMapStyle(
-                    MapStyleOptions.loadRawResourceStyle(
-                            mActivity,
-                            resourceID
-                    )
-            ))
-                Log.e("STYLE", "FAILED");
+//            if(!mGoogleMap.setMapStyle(
+//                    MapStyleOptions.loadRawResourceStyle(
+//                            mActivity,
+//                            resourceID
+//                    )
+//            ))
+//                Log.e("STYLE", "FAILED");
         } catch (Resources.NotFoundException e){
 
             Log.e("STYLE", "NOT PRESENT");
@@ -316,6 +325,35 @@ public class MapsActivity extends FragmentActivity {
         });
 
     }
+    /*
+                                    INFO ADAPTER CLASS
+     */
+
+    private class TeamInfoAdapter implements GoogleMap.InfoWindowAdapter {
+        private final CardView  mCardView;
+        private final ImageView mTeamIcon;
+        private final TextView  mTeamName;
+        private final TextView  mTeamPower;
+
+        public TeamInfoAdapter(){
+            mCardView = (CardView)  mActivity.getLayoutInflater().inflate(R.layout.team_card_view, null);
+            mTeamIcon = (ImageView) mCardView.findViewById(R.id.team_icon_image_view);
+            mTeamName = (TextView)  mCardView.findViewById(R.id.team_name_text_view);
+            mTeamPower= (TextView)  mCardView.findViewById(R.id.team_power_text_view);
+        }
+
+        @Override
+        public View getInfoWindow(Marker marker) {
+            mTeamName.setText(marker.getTitle());
+            return mCardView;
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            return null;
+        }
+    }
+
     /*
                                     UTILITY FUNCTIONS
      */
