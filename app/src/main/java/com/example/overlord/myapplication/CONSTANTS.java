@@ -12,6 +12,5 @@ class CONSTANTS {
     static class FIREBASE{
         static final String GEOFIRE="LOCATIONS_GEOFIRE";
     }
-
-
+    static String PLAYER_LOCATION_TAG = "PLAYER_LOCATION";
 }

@@ -3,6 +3,7 @@ package com.example.overlord.myapplication;
 import android.*;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -10,6 +11,7 @@ import android.util.Log;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DatabaseError;
 
@@ -22,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 class LocationUtils {
+    private static DataStash dataStash = DataStash.getDataStash();
 
     private static final int REQUEST_LOCATION_CODE = 0;
 
@@ -34,20 +37,24 @@ class LocationUtils {
     };
 
 
-    public static LatLng getLatLng(GeoLocation location){
+    static LatLng getLatLng(GeoLocation location){
         return new LatLng(location.latitude, location.longitude);
     }
 
-    public static LatLng getLatLng(Location location){
+    static LatLng getLatLng(Location location){
         return new LatLng(location.getLatitude(), location.getLongitude());
     }
 
-    public static GeoLocation getGeoLocation(LatLng location){
+    static GeoLocation getGeoLocation(LatLng location){
         return new GeoLocation(location.latitude, location.longitude);
     }
 
+    static GeoLocation getGeoLocation(Location location){
+        return new GeoLocation(location.getLatitude(), location.getLongitude());
+    }
 
-    public static boolean checkPermissions(Activity activity){
+
+    static boolean checkPermissions(Activity activity){
         boolean permissionsGranted = true;
 
         for(String permission : mRequiredPermissions)
@@ -62,7 +69,7 @@ class LocationUtils {
         return permissionsGranted;
     }
 
-    public static void requestPermissions(Activity activity){
+    static void requestPermissions(Activity activity){
         ActivityCompat.requestPermissions(
                 activity,
                 mRequiredPermissions,
@@ -73,10 +80,10 @@ class LocationUtils {
     /*
                 RUN ONCE
      */
-    public static void addStaticGeofireLocations(GeoFire geofire,
-                                                    Map<String, GeoLocation> staticGeolocations){
-        for(Map.Entry<String, GeoLocation> locationEntry : staticGeolocations.entrySet())
-            geofire.setLocation(
+    static void addStaticGeoFireLocations(Map<String, GeoLocation> staticGeoLocations){
+        for(Map.Entry<String, GeoLocation> locationEntry : staticGeoLocations.entrySet())
+        dataStash.geoFire
+                .setLocation(
                     locationEntry.getKey(),
                     locationEntry.getValue(),
                     //Success
@@ -88,19 +95,11 @@ class LocationUtils {
                         }});
     }
 
-    public static Map<String, GeoLocation> getInputGeoFireLocations(){
+    static Map<String, GeoLocation> getInputGeoFireLocations(){
         Map<String, GeoLocation> locationMap = new ConcurrentHashMap<>();
 
-        GeoLocation geoLocations[] = new GeoLocation[]{
-                new GeoLocation(22.253496, 84.902362),
-                new GeoLocation(22.253449, 84.902495),
-                new GeoLocation(22.253373, 84.902730),
-                new GeoLocation(22.252920, 84.902039),
-                new GeoLocation(22.253169, 84.902115),
-                new GeoLocation(22.253423, 84.902204),
-                new GeoLocation(22.253080, 84.902278),
-                new GeoLocation(22.253148, 84.902558)
-        };
+        GeoLocation geoLocations[] = dataStash.getGeoLocations();
+
         int i = 0;
         for(GeoLocation geoLocation : geoLocations) {
             i += 1;
@@ -109,4 +108,30 @@ class LocationUtils {
         return locationMap;
     }
 
+
+    /*
+                            Google Map Styling
+     */
+
+
+    static void setGoogleMapStyle(GoogleMap googleMap, int resourceID){
+        try{
+            googleMap.getUiSettings().setMapToolbarEnabled(false);
+
+            googleMap.setMaxZoomPreference(googleMap.getMaxZoomLevel());
+            googleMap.setBuildingsEnabled(true);
+
+
+//            if(!googleMap.setMapStyle(
+//                    MapStyleOptions.loadRawResourceStyle(
+//                            mActivity,
+//                            resourceID
+//                    )
+//            ))
+//                Log.e("STYLE", "FAILED");
+        } catch (Resources.NotFoundException e){
+
+            Log.e("STYLE", "NOT PRESENT");
+        }
+    }
 }
