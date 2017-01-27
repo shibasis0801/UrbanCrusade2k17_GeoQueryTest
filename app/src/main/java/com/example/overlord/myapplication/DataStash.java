@@ -1,6 +1,5 @@
 package com.example.overlord.myapplication;
 
-import android.app.Activity;
 import android.location.Location;
 
 import com.firebase.geofire.GeoFire;
@@ -17,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Singleton
  * Holds dynamic data
+ *
  */
 
 class DataStash {
@@ -53,8 +53,10 @@ class DataStash {
 
     /**
      * Fuck Getter/Setters
+     *
      */
 
+    double querySize = 9.1;//KM
     Map<String, GeoLocation> enemyPlayerLocations = new ConcurrentHashMap<>();
     Location playerLocation;
     GoogleApiClient googleApiClient;

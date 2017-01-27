@@ -11,28 +11,24 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DatabaseError;
-
 import java.util.Map;
+
 /**
- * Created by overlord on 26/1/17.
+ * Real time Google Map Updates when WAR starts.
  */
 
 class WarMap {
     private static DataStash dataStash = DataStash.getDataStash();
 
     static void updateCentralLocation(Activity activity, Location location){
-        double latitude = location.getLatitude();
-        double longitude= location.getLongitude();
-
         dataStash.playerLocation = location;
 
         if(dataStash.geoQuery == null)
-            dataStash.geoQuery = dataStash
-                    .geoFire
+            dataStash.geoQuery = dataStash.geoFire
                     .queryAtLocation(
                             LocationUtils
                                     .getGeoLocation(location),
-                            0.1
+                            dataStash.querySize
                     );
         else
             dataStash.geoQuery.setCenter(LocationUtils.getGeoLocation(location));
@@ -40,7 +36,7 @@ class WarMap {
         dataStash.geoFire
                 .setLocation(
                 CONSTANTS.PLAYER_LOCATION_TAG,
-                new GeoLocation(latitude, longitude),
+                LocationUtils.getGeoLocation(location),
                 new GeoFire.CompletionListener() {
                     @Override
                     public void onComplete(String key, DatabaseError error) {
@@ -59,17 +55,19 @@ class WarMap {
                     @Override
                     public void run() {
                         if(LocationUtils.checkPermissions(activity)){
-                            dataStash.googleMap.clear();
+
+                            dataStash.googleMap.clear();//markers
+
                             MarkerOptions options = new MarkerOptions()
                                     .rotation(location.getBearing())
                                     .flat(true);
-
+                            Log.d("enemySize", "" + dataStash.enemyPlayerLocations.size());
                             //Enemies
-                            for(Map.Entry<String, GeoLocation> team : dataStash.enemyPlayerLocations.entrySet())
+                            for(Map.Entry<String, GeoLocation> enemy : dataStash.enemyPlayerLocations.entrySet())
                                 dataStash.googleMap
                                         .addMarker(
-                                        options.position(LocationUtils.getLatLng(team.getValue()))
-                                                .title(team.getKey())
+                                        options.position(LocationUtils.getLatLng(enemy.getValue()))
+                                                .title(enemy.getKey())
                                                 .icon(BitmapDescriptorFactory
                                                         .defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
                                 );

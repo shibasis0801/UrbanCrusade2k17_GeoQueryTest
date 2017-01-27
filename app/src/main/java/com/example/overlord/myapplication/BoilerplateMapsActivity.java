@@ -18,12 +18,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 
 /**
- * Created by overlord on 26/1/17.
+ * Handles Boiler Plate. Meant to be inherited by only MapsActivity.
+ *
+ * Creates the GoogleApiClient, Issues location request centered around player's current location.
+ *
  */
 
-abstract class InitializedGeoFireActivity extends AppCompatActivity {
+abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
     private static DataStash dataStash = DataStash.getDataStash();
+
     private LocationRequest mLocationRequest;
 
 
@@ -31,13 +35,15 @@ abstract class InitializedGeoFireActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        createGoogleApiClient();
+
+        dataStash.googleApiClient = createGoogleApiClient();
+
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             /**
              * Manipulates the map once available.
@@ -50,9 +56,15 @@ abstract class InitializedGeoFireActivity extends AppCompatActivity {
 
             @Override
             public void onMapReady(GoogleMap googleMap) {
+                Log.d("BPMAonCreate","getMapAsync");
+
                 dataStash.googleMap = googleMap;
+
                 LocationUtils.setGoogleMapStyle(dataStash.googleMap, R.raw.defender_style);
-                LocationUtils.addStaticGeoFireLocations(LocationUtils.getInputGeoFireLocations());
+                LocationUtils.addStaticGeoFireLocations(dataStash.geoFire,
+                        LocationUtils.getInputGeoFireLocations());
+
+                UrbanListeners.setupListeners(getPresentActivity());
             }
         });
     }
@@ -66,8 +78,7 @@ abstract class InitializedGeoFireActivity extends AppCompatActivity {
                         mLocationRequest = LocationRequest
                                 .create()
                                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                                .setInterval(1000);
-
+                                .setInterval(1000);//ms
                         if(LocationUtils.checkPermissions(getPresentActivity()))
                             try {
                                 LocationServices
@@ -86,7 +97,7 @@ abstract class InitializedGeoFireActivity extends AppCompatActivity {
                                                 });
                             }
                             catch (SecurityException se) {
-                                Log.d("Security exception", se.toString());
+                                Log.d("SECURITY_API_CLIENT", se.toString());
                             }
                         else{
                             LocationUtils.requestPermissions(getPresentActivity());
@@ -110,14 +121,13 @@ abstract class InitializedGeoFireActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if(dataStash.googleApiClient != null)
-            dataStash.googleApiClient.connect();
+        dataStash.googleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
-        if(dataStash.googleApiClient != null)
-            dataStash.googleApiClient.disconnect();
+        Log.e("LogicalError", "onStopCalled");
+        dataStash.googleApiClient.disconnect();
         super.onStop();
     }
 

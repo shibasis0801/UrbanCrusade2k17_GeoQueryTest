@@ -45,17 +45,18 @@ class UrbanListeners {
 
                 @Override
                 public void onKeyMoved(String key, GeoLocation location) {
-                    Log.d("LOCATION CHANGES", "MOVING");
+                    Log.i("Moving", key);
                 }
 
                 @Override
                 public void onGeoQueryReady() {
-
+                    Log.i("GeoQuery", "READY");
                 }
 
                 @Override
                 public void onGeoQueryError(DatabaseError error) {
-
+                    if(error != null)
+                        Log.e("GeoQueryError", error.toString());
                 }
             });
     }

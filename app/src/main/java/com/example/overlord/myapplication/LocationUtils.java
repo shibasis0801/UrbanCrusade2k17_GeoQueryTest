@@ -1,6 +1,5 @@
 package com.example.overlord.myapplication;
 
-import android.*;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -20,7 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Created by overlord on 25/1/17.
+ * Helper functions, Permissions, Conversions all that crap.
+ *
+ * Reads list of initial list of GeoLocations(Player Bases)
+ * Has functions for converting LatLng, Location to GeoLocation, Location, GeoLocation to LatLng
  */
 
 class LocationUtils {
@@ -80,10 +82,9 @@ class LocationUtils {
     /*
                 RUN ONCE
      */
-    static void addStaticGeoFireLocations(Map<String, GeoLocation> staticGeoLocations){
+    static void addStaticGeoFireLocations(GeoFire geoFire, Map<String, GeoLocation> staticGeoLocations){
         for(Map.Entry<String, GeoLocation> locationEntry : staticGeoLocations.entrySet())
-        dataStash.geoFire
-                .setLocation(
+            geoFire.setLocation(
                     locationEntry.getKey(),
                     locationEntry.getValue(),
                     //Success
