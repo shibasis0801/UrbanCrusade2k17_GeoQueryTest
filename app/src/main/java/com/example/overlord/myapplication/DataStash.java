@@ -56,7 +56,7 @@ class DataStash {
      *
      */
 
-    double querySize = 9.1;//KM
+    double querySize = 90.1;//KM
     Map<String, GeoLocation> enemyPlayerLocations = new ConcurrentHashMap<>();
     Location playerLocation;
     GoogleApiClient googleApiClient;

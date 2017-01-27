@@ -1,18 +1,28 @@
 package com.example.overlord.myapplication;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.facebook.login.LoginResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -26,10 +36,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 
 abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
+    private static final int REQUEST_PERMISSIONS  = 0;
+    private final static int REQUEST_CHECK_SETTINGS = 1;
+
+    private GoogleApiClient mGoogleApiClient;
     private static DataStash dataStash = DataStash.getDataStash();
-
-    private LocationRequest mLocationRequest;
-
 
     protected abstract Activity getPresentActivity();
 
@@ -42,7 +53,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                 .findFragmentById(R.id.map);
 
 
-        dataStash.googleApiClient = createGoogleApiClient();
+        mGoogleApiClient = createGoogleApiClient();
 
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             /**
@@ -69,44 +80,78 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
         });
     }
 
-    protected GoogleApiClient createGoogleApiClient() {
+    protected LocationRequest createLocationRequest(){
+        return LocationRequest
+                .create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(1000);//ms
+
+    }
+    protected void issueLocationRequest(LocationRequest locationRequest){
+        try {
+            LocationServices
+                    .FusedLocationApi
+                    .requestLocationUpdates(
+                            mGoogleApiClient,
+                            locationRequest,
+                            new LocationListener() {
+                                @Override
+                                public void onLocationChanged(Location location) {
+                                    WarMap.updateCentralLocation(
+                                            getPresentActivity(),
+                                            location
+                                    );
+                                }
+                            });
+        } catch (SecurityException se) {
+            Log.d("SECURITY_API_CLIENT", se.toString());
+        }
+    }
+
+
+    protected synchronized GoogleApiClient createGoogleApiClient() {
         return new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(@Nullable Bundle bundle) {
-                        mLocationRequest = LocationRequest
-                                .create()
-                                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                                .setInterval(1000);//ms
-                        if(LocationUtils.checkPermissions(getPresentActivity()))
-                            try {
-                                LocationServices
-                                        .FusedLocationApi
-                                        .requestLocationUpdates(
-                                                dataStash.googleApiClient,
-                                                mLocationRequest,
-                                                new LocationListener() {
-                                                    @Override
-                                                    public void onLocationChanged(Location location) {
-                                                        WarMap.updateCentralLocation(
-                                                                getPresentActivity(),
-                                                                location
-                                                        );
-                                                    }
-                                                });
-                            }
-                            catch (SecurityException se) {
-                                Log.d("SECURITY_API_CLIENT", se.toString());
-                            }
+                        if(LocationUtils.checkPermissions(getPresentActivity())) {
+                            final LocationRequest locationRequest = createLocationRequest();
+
+                            LocationUtils.requestSettings(locationRequest, mGoogleApiClient)
+                                    .setResultCallback(
+                                    new ResultCallback<LocationSettingsResult>() {
+                                        @Override
+                                        public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                                            final Status status = locationSettingsResult.getStatus();
+                                            switch (status.getStatusCode()){
+                                                case LocationSettingsStatusCodes.SUCCESS:
+                                                    issueLocationRequest(locationRequest);
+                                                    break;
+
+                                                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                                    try{
+                                                        status.startResolutionForResult(getPresentActivity(),
+                                                                REQUEST_CHECK_SETTINGS);
+                                                    } catch (IntentSender.SendIntentException e) {}
+                                                    break;
+                                                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                                    Toast.makeText(getPresentActivity(),
+                                                            "IRREVOCABLY FUCKED, RESTART", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    }
+                            );
+                        }
                         else{
-                            LocationUtils.requestPermissions(getPresentActivity());
+                            LocationUtils.requestPermissions(getPresentActivity(),
+                                    REQUEST_PERMISSIONS);
                         }
                     }
 
                     @Override
                     public void onConnectionSuspended(int i) {
-                        dataStash.googleApiClient.connect();
+                        mGoogleApiClient.connect();
                     }
                 })
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
@@ -121,13 +166,13 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        dataStash.googleApiClient.connect();
+        mGoogleApiClient.connect();
     }
 
     @Override
     protected void onStop() {
         Log.e("LogicalError", "onStopCalled");
-        dataStash.googleApiClient.disconnect();
+        mGoogleApiClient.disconnect();
         super.onStop();
     }
 
@@ -137,4 +182,5 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
             dataStash.geoQuery.removeAllListeners();
         super.onDestroy();
     }
+
 }

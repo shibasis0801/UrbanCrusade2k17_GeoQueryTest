@@ -10,6 +10,12 @@ import android.util.Log;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DatabaseError;
@@ -27,8 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class LocationUtils {
     private static DataStash dataStash = DataStash.getDataStash();
-
-    private static final int REQUEST_LOCATION_CODE = 0;
 
     private static final String[] mRequiredPermissions = new String[]{
             android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -71,18 +75,33 @@ class LocationUtils {
         return permissionsGranted;
     }
 
-    static void requestPermissions(Activity activity){
+    static void requestPermissions(Activity activity, int code){
         ActivityCompat.requestPermissions(
                 activity,
                 mRequiredPermissions,
-                REQUEST_LOCATION_CODE
+                code
         );
+    }
+
+    static PendingResult<LocationSettingsResult> requestSettings(LocationRequest locationRequest,
+                                                                 GoogleApiClient googleApiClient){
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest
+                .Builder()
+                .addLocationRequest(locationRequest);
+
+        return LocationServices
+                        .SettingsApi
+                        .checkLocationSettings(
+                                googleApiClient,
+                                builder.build()
+                        );
     }
 
     /*
                 RUN ONCE
      */
-    static void addStaticGeoFireLocations(GeoFire geoFire, Map<String, GeoLocation> staticGeoLocations){
+    static void addStaticGeoFireLocations(GeoFire geoFire,
+                                          Map<String, GeoLocation> staticGeoLocations){
         for(Map.Entry<String, GeoLocation> locationEntry : staticGeoLocations.entrySet())
             geoFire.setLocation(
                     locationEntry.getKey(),

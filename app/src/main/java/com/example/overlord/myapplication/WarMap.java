@@ -61,6 +61,7 @@ class WarMap {
                             MarkerOptions options = new MarkerOptions()
                                     .rotation(location.getBearing())
                                     .flat(true);
+
                             Log.d("enemySize", "" + dataStash.enemyPlayerLocations.size());
                             //Enemies
                             for(Map.Entry<String, GeoLocation> enemy : dataStash.enemyPlayerLocations.entrySet())
