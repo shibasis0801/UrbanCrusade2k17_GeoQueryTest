@@ -2,6 +2,7 @@ package com.example.overlord.myapplication;
 
 import android.location.Location;
 import android.support.design.widget.BottomSheetBehavior;
+import android.view.View;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -69,4 +70,5 @@ class DataStash {
      *      UI updation
      */
     BottomSheetBehavior bottomSheetBehavior;
+    View bottomSheet;
 }

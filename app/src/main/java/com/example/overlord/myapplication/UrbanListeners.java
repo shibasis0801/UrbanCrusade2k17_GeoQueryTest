@@ -71,6 +71,7 @@ class UrbanListeners {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
                         if(dataStash.bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED)
+                            dataStash.googleMap.setPadding(0,0,0,dataStash.bottomSheet.getHeight());
                             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         return false;
                     }
@@ -83,6 +84,7 @@ class UrbanListeners {
                     public void onMapClick(LatLng latLng) {
                         if(dataStash.bottomSheetBehavior.getState() ==
                                 BottomSheetBehavior.STATE_EXPANDED){
+                            dataStash.googleMap.setPadding(0,0,0,0);
                             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                         }
                     }

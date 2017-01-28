@@ -41,7 +41,6 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSIONS    = 0;
     private final static int REQUEST_CHECK_SETTINGS = 1;
-
     private static final String TAG = "BoilerplateMapsActivity";
 
     private GoogleApiClient mGoogleApiClient;
@@ -88,8 +87,8 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
      protected void createView(){
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainContent);
-        View bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
-        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        dataStash.bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
+        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(dataStash.bottomSheet);
         dataStash.bottomSheetBehavior
                 .setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             boolean first = true;
@@ -167,7 +166,9 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                                                                 getPresentActivity(),
                                                                 REQUEST_CHECK_SETTINGS
                                                         );
-                                                    } catch (IntentSender.SendIntentException e) {}
+                                                    } catch (IntentSender.SendIntentException e) {
+                                                        Log.e("BoilerPlateMapsActivity", "SendIntentException " + e);
+                                                    }
                                                     break;
                                                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                                                     Toast.makeText(getPresentActivity(),
@@ -200,6 +201,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if(dataStash.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+            dataStash.bottomSheet.setPadding(0,0,0,0);
             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             super.onBackPressed();
