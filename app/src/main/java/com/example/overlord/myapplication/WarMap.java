@@ -63,6 +63,7 @@ class WarMap {
                                     .flat(true);
 
                             Log.d("enemySize", "" + dataStash.enemyPlayerLocations.size());
+
                             //Enemies
                             for(Map.Entry<String, GeoLocation> enemy : dataStash.enemyPlayerLocations.entrySet())
                                 dataStash.googleMap
@@ -92,7 +93,8 @@ class WarMap {
 
                             dataStash.googleMap
                                     .animateCamera(CameraUpdateFactory
-                                    .newCameraPosition(cameraPosition));
+                                            .newCameraPosition(cameraPosition)
+                                    );
                         }
                     }
                 }

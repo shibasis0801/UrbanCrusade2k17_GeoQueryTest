@@ -7,8 +7,11 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.facebook.login.LoginResult;
@@ -36,10 +39,13 @@ import com.google.android.gms.maps.SupportMapFragment;
 
 abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
-    private static final int REQUEST_PERMISSIONS  = 0;
+    private static final int REQUEST_PERMISSIONS    = 0;
     private final static int REQUEST_CHECK_SETTINGS = 1;
 
+    private static final String TAG = "BoilerplateMapsActivity";
+
     private GoogleApiClient mGoogleApiClient;
+
     private static DataStash dataStash = DataStash.getDataStash();
 
     protected abstract Activity getPresentActivity();
@@ -54,7 +60,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
 
         mGoogleApiClient = createGoogleApiClient();
-
+        createView();
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             /**
              * Manipulates the map once available.
@@ -80,11 +86,34 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
         });
     }
 
+     protected void createView(){
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainContent);
+        View bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
+        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        dataStash.bottomSheetBehavior
+                .setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            boolean first = true;
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                Log.d(TAG, "LocationChanged" + newState);
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                Log.d(TAG, "Slide");
+                if(first){
+                    first = false;
+                    bottomSheet.setTranslationY(0);
+                }
+            }
+        });
+    }
+
     protected LocationRequest createLocationRequest(){
         return LocationRequest
                 .create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(1000);//ms
+                .setInterval(2000);//ms
 
     }
     protected void issueLocationRequest(LocationRequest locationRequest){
@@ -116,6 +145,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                     @Override
                     public void onConnected(@Nullable Bundle bundle) {
                         if(LocationUtils.checkPermissions(getPresentActivity())) {
+
                             final LocationRequest locationRequest = createLocationRequest();
 
                             LocationUtils.requestSettings(locationRequest, mGoogleApiClient)
@@ -124,15 +154,19 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                                         @Override
                                         public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
                                             final Status status = locationSettingsResult.getStatus();
+
                                             switch (status.getStatusCode()){
                                                 case LocationSettingsStatusCodes.SUCCESS:
+                                                    //Actual Location Request Call
                                                     issueLocationRequest(locationRequest);
                                                     break;
 
                                                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                                                     try{
-                                                        status.startResolutionForResult(getPresentActivity(),
-                                                                REQUEST_CHECK_SETTINGS);
+                                                        status.startResolutionForResult(
+                                                                getPresentActivity(),
+                                                                REQUEST_CHECK_SETTINGS
+                                                        );
                                                     } catch (IntentSender.SendIntentException e) {}
                                                     break;
                                                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
@@ -161,6 +195,15 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                     }
                 })
                 .build();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(dataStash.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+            dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override

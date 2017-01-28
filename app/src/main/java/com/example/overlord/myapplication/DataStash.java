@@ -1,6 +1,7 @@
 package com.example.overlord.myapplication;
 
 import android.location.Location;
+import android.support.design.widget.BottomSheetBehavior;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -59,9 +60,13 @@ class DataStash {
     double querySize = 90.1;//KM
     Map<String, GeoLocation> enemyPlayerLocations = new ConcurrentHashMap<>();
     Location playerLocation;
-    GoogleApiClient googleApiClient;
     GoogleMap googleMap;
     DatabaseReference fireBase;
     GeoFire geoFire;
     GeoQuery geoQuery;
+
+    /**
+     *      UI updation
+     */
+    BottomSheetBehavior bottomSheetBehavior;
 }

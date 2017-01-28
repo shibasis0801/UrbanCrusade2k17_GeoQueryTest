@@ -1,12 +1,14 @@
 package com.example.overlord.myapplication;
 
 import android.app.Activity;
+import android.support.design.widget.BottomSheetBehavior;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.firebase.database.DatabaseError;
 
@@ -68,23 +70,23 @@ class UrbanListeners {
                 new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
-
+                        if(dataStash.bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED)
+                            dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         return false;
                     }
                 }
         );
 
         dataStash.googleMap
-                .setInfoWindowAdapter(new TeamInfoAdapter(activity));
-
-        dataStash.googleMap
-                .setOnInfoWindowClickListener(
-                new GoogleMap.OnInfoWindowClickListener() {
+                .setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                     @Override
-                    public void onInfoWindowClick(Marker marker) {
-                        Toast.makeText(activity, "YO", Toast.LENGTH_SHORT).show();
+                    public void onMapClick(LatLng latLng) {
+                        if(dataStash.bottomSheetBehavior.getState() ==
+                                BottomSheetBehavior.STATE_EXPANDED){
+                            dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        }
                     }
-                }
-        );
+                });
+
     }
 }

@@ -85,15 +85,16 @@ class LocationUtils {
 
     static PendingResult<LocationSettingsResult> requestSettings(LocationRequest locationRequest,
                                                                  GoogleApiClient googleApiClient){
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest
+        LocationSettingsRequest request = new LocationSettingsRequest
                 .Builder()
-                .addLocationRequest(locationRequest);
+                .addLocationRequest(locationRequest)
+                .build();
 
         return LocationServices
                         .SettingsApi
                         .checkLocationSettings(
                                 googleApiClient,
-                                builder.build()
+                                request
                         );
     }
 
