@@ -3,6 +3,7 @@ package com.example.overlord.myapplication;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -47,6 +48,8 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
     private static DataStash dataStash = DataStash.getDataStash();
 
+    private LocationRequest mLocationRequest;
+
     protected abstract Activity getPresentActivity();
 
     @Override
@@ -90,6 +93,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainContent);
         bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
         dataStash.bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+
         dataStash.bottomSheetBehavior
                 .setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             boolean first = true;
@@ -138,6 +142,38 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
         }
     }
 
+    protected void checkedIssueRequest(){
+        LocationUtils.requestSettings(mLocationRequest, mGoogleApiClient)
+                .setResultCallback(
+                        new ResultCallback<LocationSettingsResult>() {
+                            @Override
+                            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                                final Status status = locationSettingsResult.getStatus();
+
+                                switch (status.getStatusCode()){
+                                    case LocationSettingsStatusCodes.SUCCESS:
+                                        //Actual Location Request Call
+                                        issueLocationRequest(mLocationRequest);
+                                        break;
+
+                                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                        try{
+                                            status.startResolutionForResult(
+                                                    getPresentActivity(),
+                                                    REQUEST_CHECK_SETTINGS
+                                            );
+                                        } catch (IntentSender.SendIntentException e) {
+                                            Log.e("BoilerPlateMapsActivity", "SendIntentException " + e);
+                                        }
+                                        break;
+                                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                                        Toast.makeText(getPresentActivity(),
+                                                "IRREVOCABLY FUCKED, RESTART", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                );
+    }
 
     protected synchronized GoogleApiClient createGoogleApiClient() {
         return new GoogleApiClient.Builder(this)
@@ -146,39 +182,8 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                     @Override
                     public void onConnected(@Nullable Bundle bundle) {
                         if(LocationUtils.checkPermissions(getPresentActivity())) {
-
-                            final LocationRequest locationRequest = createLocationRequest();
-
-                            LocationUtils.requestSettings(locationRequest, mGoogleApiClient)
-                                    .setResultCallback(
-                                    new ResultCallback<LocationSettingsResult>() {
-                                        @Override
-                                        public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-                                            final Status status = locationSettingsResult.getStatus();
-
-                                            switch (status.getStatusCode()){
-                                                case LocationSettingsStatusCodes.SUCCESS:
-                                                    //Actual Location Request Call
-                                                    issueLocationRequest(locationRequest);
-                                                    break;
-
-                                                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                                    try{
-                                                        status.startResolutionForResult(
-                                                                getPresentActivity(),
-                                                                REQUEST_CHECK_SETTINGS
-                                                        );
-                                                    } catch (IntentSender.SendIntentException e) {
-                                                        Log.e("BoilerPlateMapsActivity", "SendIntentException " + e);
-                                                    }
-                                                    break;
-                                                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                                                    Toast.makeText(getPresentActivity(),
-                                                            "IRREVOCABLY FUCKED, RESTART", Toast.LENGTH_SHORT).show();
-                                            }
-                                        }
-                                    }
-                            );
+                            mLocationRequest = createLocationRequest();
+                            checkedIssueRequest();
                         }
                         else{
                             LocationUtils.requestPermissions(getPresentActivity(),
@@ -219,7 +224,6 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        Log.e("LogicalError", "onStopCalled");
         mGoogleApiClient.disconnect();
         super.onStop();
     }
@@ -233,11 +237,40 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS: {
+                if (grantResults.length > 0) {
+                    boolean permissionGranted = true;
+                    for (int i = 0; i < 5; ++i) {
+                        permissionGranted = permissionGranted &&
+                                (grantResults[i] == PackageManager.PERMISSION_GRANTED);
+                    }
+                    if (permissionGranted) {
+                        checkedIssueRequest();
+                    }
+                } else {
+                    Toast.makeText(getPresentActivity(),
+                            "Please grant all permissions!",
+                            Toast.LENGTH_SHORT)
+                            .show();
+                }
+            }
+            break;
+            default:
+                    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case REQUEST_CHECK_SETTINGS:
+                if (resultCode == RESULT_OK)
+                    issueLocationRequest(mLocationRequest);
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }
