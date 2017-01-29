@@ -60,6 +60,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
         mGoogleApiClient = createGoogleApiClient();
         createView();
+
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             /**
              * Manipulates the map once available.
@@ -80,15 +81,15 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                 LocationUtils.addStaticGeoFireLocations(dataStash.geoFire,
                         LocationUtils.getInputGeoFireLocations());
 
-                UrbanListeners.setupListeners(getPresentActivity());
             }
         });
     }
 
-     protected void createView(){
+    private View bottomSheet;
+    protected void createView(){
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainContent);
-        dataStash.bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
-        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(dataStash.bottomSheet);
+        bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
+        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         dataStash.bottomSheetBehavior
                 .setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             boolean first = true;
@@ -127,7 +128,8 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                                 public void onLocationChanged(Location location) {
                                     WarMap.updateCentralLocation(
                                             getPresentActivity(),
-                                            location
+                                            location,
+                                            bottomSheet
                                     );
                                 }
                             });
@@ -186,13 +188,14 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
                     @Override
                     public void onConnectionSuspended(int i) {
+                        Toast.makeText(getPresentActivity(), "SUSFUCK", Toast.LENGTH_SHORT).show();
                         mGoogleApiClient.connect();
                     }
                 })
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
                     @Override
                     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+                        Toast.makeText(getPresentActivity(), "FAILFUCK", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .build();
@@ -201,7 +204,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if(dataStash.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
-            dataStash.bottomSheet.setPadding(0,0,0,0);
+            bottomSheet.setPadding(0,0,0,0);
             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             super.onBackPressed();
@@ -228,4 +231,13 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 }

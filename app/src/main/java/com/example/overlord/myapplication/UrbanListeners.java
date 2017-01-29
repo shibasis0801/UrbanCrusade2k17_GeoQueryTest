@@ -3,6 +3,7 @@ package com.example.overlord.myapplication;
 import android.app.Activity;
 import android.support.design.widget.BottomSheetBehavior;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoLocation;
@@ -20,10 +21,10 @@ class UrbanListeners {
 
     private static DataStash dataStash = DataStash.getDataStash();
 
-    static void setupListeners(Activity activity){
+    static void setupListeners(Activity activity, final View bottomSheet){
         setFireBaseListeners(activity);
         setGeoQueryListeners(activity);
-        setGoogleMapListeners(activity);
+        setGoogleMapListeners(activity, bottomSheet);
     }
 
     private static void setFireBaseListeners(Activity activity){}
@@ -64,14 +65,14 @@ class UrbanListeners {
     }
 
 
-    private static void setGoogleMapListeners(final Activity activity){
+    private static void setGoogleMapListeners(final Activity activity, final View bottomSheet){
         dataStash.googleMap
                 .setOnMarkerClickListener(
                 new GoogleMap.OnMarkerClickListener() {
                     @Override
                     public boolean onMarkerClick(Marker marker) {
                         if(dataStash.bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED)
-                            dataStash.googleMap.setPadding(0,0,0,dataStash.bottomSheet.getHeight());
+                            dataStash.googleMap.setPadding(0,0,0,bottomSheet.getHeight());
                             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                         return false;
                     }

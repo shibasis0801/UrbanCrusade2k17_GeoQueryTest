@@ -70,5 +70,4 @@ class DataStash {
      *      UI updation
      */
     BottomSheetBehavior bottomSheetBehavior;
-    View bottomSheet;
 }
