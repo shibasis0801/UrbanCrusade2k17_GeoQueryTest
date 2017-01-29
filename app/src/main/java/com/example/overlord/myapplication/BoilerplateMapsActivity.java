@@ -29,7 +29,6 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-
 /**
  * Handles Boiler Plate. Meant to be inherited by only MapsActivity.
  *
@@ -42,24 +41,22 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSIONS    = 0;
     private final static int REQUEST_CHECK_SETTINGS = 1;
     private static final String TAG = "BoilerplateMapsActivity";
-
+    private View bottomSheet;
     private GoogleApiClient mGoogleApiClient;
 
     private static DataStash dataStash = DataStash.getDataStash();
-
     protected abstract Activity getPresentActivity();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
+       //Inflating views
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-
+        createView();
 
         mGoogleApiClient = createGoogleApiClient();
-        createView();
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             /**
              * Manipulates the map once available.
@@ -77,18 +74,19 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                 dataStash.googleMap = googleMap;
 
                 LocationUtils.setGoogleMapStyle(dataStash.googleMap, R.raw.defender_style);
+
                 LocationUtils.addStaticGeoFireLocations(dataStash.geoFire,
                         LocationUtils.getInputGeoFireLocations());
 
-                UrbanListeners.setupListeners(getPresentActivity());
+
             }
         });
     }
 
      protected void createView(){
         CoordinatorLayout coordinatorLayout = (CoordinatorLayout)findViewById(R.id.mainContent);
-        dataStash.bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
-        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(dataStash.bottomSheet);
+         bottomSheet = coordinatorLayout.findViewById(R.id.bottomSheet);
+        dataStash.bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         dataStash.bottomSheetBehavior
                 .setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             boolean first = true;
@@ -127,7 +125,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
                                 public void onLocationChanged(Location location) {
                                     WarMap.updateCentralLocation(
                                             getPresentActivity(),
-                                            location
+                                            location, bottomSheet
                                     );
                                 }
                             });
@@ -156,7 +154,9 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
 
                                             switch (status.getStatusCode()){
                                                 case LocationSettingsStatusCodes.SUCCESS:
-                                                    //Actual Location Request Call
+                                                    /**
+                                                     *          Location Request
+                                                     */
                                                     issueLocationRequest(locationRequest);
                                                     break;
 
@@ -201,7 +201,7 @@ abstract class BoilerplateMapsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if(dataStash.bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
-            dataStash.bottomSheet.setPadding(0,0,0,0);
+            bottomSheet.setPadding(0,0,0,0);
             dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else {
             super.onBackPressed();

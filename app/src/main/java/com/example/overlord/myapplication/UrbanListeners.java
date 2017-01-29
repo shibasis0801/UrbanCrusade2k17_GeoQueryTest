@@ -2,7 +2,9 @@ package com.example.overlord.myapplication;
 
 import android.app.Activity;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.CoordinatorLayout;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoLocation;
@@ -20,10 +22,11 @@ class UrbanListeners {
 
     private static DataStash dataStash = DataStash.getDataStash();
 
-    static void setupListeners(Activity activity){
+    static void setupListeners(Activity activity, View bottomSheet){
+
         setFireBaseListeners(activity);
         setGeoQueryListeners(activity);
-        setGoogleMapListeners(activity);
+        setGoogleMapListeners(activity, bottomSheet);
     }
 
     private static void setFireBaseListeners(Activity activity){}
@@ -34,9 +37,12 @@ class UrbanListeners {
                     .addGeoQueryEventListener(new GeoQueryEventListener() {
                 @Override
                 public void onKeyEntered(String key, GeoLocation location) {
+
                     Log.i("onKeyEntered", key + ">" + location.toString());
-                    if(!key.equals(CONSTANTS.PLAYER_LOCATION_TAG))
+                    if(!key.equals(CONSTANTS.PLAYER_LOCATION_TAG)) {
                         dataStash.enemyPlayerLocations.put(key, location);
+
+                    }
                 }
 
                 @Override
@@ -64,31 +70,32 @@ class UrbanListeners {
     }
 
 
-    private static void setGoogleMapListeners(final Activity activity){
-        dataStash.googleMap
-                .setOnMarkerClickListener(
-                new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        if(dataStash.bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED)
-                            dataStash.googleMap.setPadding(0,0,0,dataStash.bottomSheet.getHeight());
-                            dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                        return false;
-                    }
-                }
-        );
 
-        dataStash.googleMap
-                .setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                    @Override
-                    public void onMapClick(LatLng latLng) {
-                        if(dataStash.bottomSheetBehavior.getState() ==
-                                BottomSheetBehavior.STATE_EXPANDED){
-                            dataStash.googleMap.setPadding(0,0,0,0);
-                            dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    private static void setGoogleMapListeners(final Activity activity, final View bottomSheet){
+            dataStash.googleMap
+                    .setOnMarkerClickListener(
+                            new GoogleMap.OnMarkerClickListener() {
+                                @Override
+                                public boolean onMarkerClick(Marker marker) {
+                                    if (dataStash.bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_EXPANDED)
+                                        dataStash.googleMap.setPadding(0, 0, 0, bottomSheet.getHeight());
+                                    dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                                    return false;
+                                }
+                            }
+                    );
+
+            dataStash.googleMap
+                    .setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                        @Override
+                        public void onMapClick(LatLng latLng) {
+                            if (dataStash.bottomSheetBehavior.getState() ==
+                                    BottomSheetBehavior.STATE_EXPANDED) {
+                                dataStash.googleMap.setPadding(0, 0, 0, 0);
+                                dataStash.bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                            }
                         }
-                    }
-                });
-
+                    });
     }
+
 }

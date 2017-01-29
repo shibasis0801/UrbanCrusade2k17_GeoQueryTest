@@ -58,7 +58,7 @@ class DataStash {
      *
      */
 
-    double querySize = 90.1;//KM
+    double querySize = 0.1;//KM
     Map<String, GeoLocation> enemyPlayerLocations = new ConcurrentHashMap<>();
     Location playerLocation;
     GoogleMap googleMap;
@@ -70,5 +70,4 @@ class DataStash {
      *      UI updation
      */
     BottomSheetBehavior bottomSheetBehavior;
-    View bottomSheet;
 }

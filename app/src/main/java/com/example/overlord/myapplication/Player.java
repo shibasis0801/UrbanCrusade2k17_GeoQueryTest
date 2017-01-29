@@ -12,4 +12,5 @@ class Player {
     private int powerLevel;
     private int livesLeft;
     private boolean inAttackMode;
+
 }

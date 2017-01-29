@@ -2,6 +2,7 @@ package com.example.overlord.myapplication;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.View;
 
 /*
     Map Styles used
@@ -14,6 +15,7 @@ import android.os.Bundle;
  */
 
 public class MapsActivity extends BoilerplateMapsActivity {
+
 
     @Override
     protected Activity getPresentActivity() {

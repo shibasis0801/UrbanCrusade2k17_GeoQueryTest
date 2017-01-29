@@ -59,6 +59,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "434064450690-p53qmqomgido6n8cli0k51fu8ja51bi5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.overlord.myapplication",
+            "certificate_hash": "007758BDC310EE59BB19536109E34DE73AE7F892"
+          }
+        },
+        {
           "client_id": "434064450690-op7j34rhpnm1e2uc54l4i28ac3d6jgdk.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

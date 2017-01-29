@@ -3,6 +3,7 @@ package com.example.overlord.myapplication;
 import android.app.Activity;
 import android.location.Location;
 import android.util.Log;
+import android.view.View;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -20,16 +21,18 @@ import java.util.Map;
 class WarMap {
     private static DataStash dataStash = DataStash.getDataStash();
 
-    static void updateCentralLocation(Activity activity, Location location){
+    static void updateCentralLocation(Activity activity, Location location, View bottomSheet){
         dataStash.playerLocation = location;
 
-        if(dataStash.geoQuery == null)
+        if(dataStash.geoQuery == null) {
             dataStash.geoQuery = dataStash.geoFire
                     .queryAtLocation(
                             LocationUtils
                                     .getGeoLocation(location),
                             dataStash.querySize
                     );
+            UrbanListeners.setupListeners(activity, bottomSheet);
+        }
         else
             dataStash.geoQuery.setCenter(LocationUtils.getGeoLocation(location));
 
